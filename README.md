@@ -24,12 +24,14 @@ Perfect for Android developers who want a clean, customizable table with support
 
 ## ✨ Features
 
-- 🔁 Paginated rows with previous/next control
-- 💡 Adaptive column widths and responsive layout
-- 🖱️ Scrollable in both horizontal and vertical directions
-- ✅ Integrated Edit/Delete action buttons
-- 🌐 Fully compatible with Material 3
-- ♻️ Designed to be reusable across projects
+- 🔁 Full pagination (first, previous, next, last)
+- 💡 Column width control and responsive sizing
+- 🖱️ Smooth horizontal + vertical scrolling
+- ✅ Edit and Delete buttons per row
+- 🌀 Loading indicator on data fetch
+- ✏️ Text truncation with ellipsis for single-line display
+- 📐 Customizable width and height
+- 🌐 Material Design 3 compliant
 
 ---
 
