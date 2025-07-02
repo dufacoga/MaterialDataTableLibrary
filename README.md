@@ -17,7 +17,7 @@ Perfect for Android developers who want a clean, customizable table with support
 ## 🎮 Demo Preview
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/aa60e428-513e-4af9-aab4-1cb0723614fd" alt="DataTable Demo" width="90%" />
+  <img src="https://github.com/user-attachments/assets/68c17738-b9f3-426d-96db-e8c724545037" alt="DataTable Demo" width="90%" />
 </p>
 
 ---
@@ -46,15 +46,14 @@ You can integrate the component in your app like this:
 ```kotlin
 MaterialDataTableC(
     headers = listOf("ID", "Name", "Role", "Email"),
-    rows = data,
-    isLoading = false,
-    currentPage = 1,
-    pageSize = 5,
-    totalItems = 20,
+    dataLoader = { page, pageSize -> 
+        // Return your data here as List<List<String>>
+        myApi.fetchUsers(page, pageSize)
+    },
     onEdit = { rowIndex -> /* your edit logic */ },
     onDelete = { rowIndex -> /* your delete logic */ },
-    onNextPage = { /* pagination logic */ },
-    onPreviousPage = { /* pagination logic */ }
+    width = 400.dp,
+    height = 600.dp
 )
 ```
 
