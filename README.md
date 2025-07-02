@@ -65,13 +65,57 @@ You can customize everything from action icons to layout paddings if needed.
 
 ## 📦 How to Include in Your Project
 
-Clone or include this module (`MaterialDataTable`) as a library in your existing **Android project**.
+You can easily include this library in your Android project using **JitPack** — no need to download manually.
+
+### Step 1: Add JitPack to your `settings.gradle.kts` (Project level)
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+```
+
+<details>
+<summary>If you're using Groovy instead of Kotlin DSL</summary>
+
+```groovy
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+
+</details>
+
+### Step 2: Add the library dependency in your `build.gradle.kts` (Module level)
+
+```kotlin
+dependencies {
+    implementation("com.github.dufacoga:MaterialDataTableLibrary:1.0.0")
+}
+```
+
+🔖 Replace `1.0.0` with the latest tag from [https://jitpack.io/#dufacoga/MaterialDataTableLibrary](https://jitpack.io/#dufacoga/MaterialDataTableLibrary)
+
+---
+
+### 📁 Optional: Clone Manually
+
+If you prefer, you can still clone the repository directly:
 
 ```bash
 git clone https://github.com/dufacoga/MaterialDataTableLibrary.git
 ```
 
-Or import the module in **Android Studio** via `File > New > Import Module...`
+Then import the `MaterialDataTable` module in Android Studio via:  
+**`File > New > Import Module...`**
 
 ---
 
