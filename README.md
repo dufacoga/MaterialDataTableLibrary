@@ -71,12 +71,12 @@ You can easily include this library in your Android project using **JitPack** â€
 
 ```kotlin
 dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven("https://jitpack.io")
-    }
-}
+		repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+		repositories {
+			mavenCentral()
+			maven { url = uri("https://jitpack.io") }
+		}
+	}
 ```
 
 <details>
@@ -98,8 +98,8 @@ allprojects {
 
 ```kotlin
 dependencies {
-    implementation("com.github.dufacoga:MaterialDataTableLibrary:1.0.0")
-}
+	        implementation("com.github.dufacoga:MaterialDataTableLibrary:v1.0.0")
+	}
 ```
 
 ðŸ”– Replace `1.0.0` with the latest tag from [https://jitpack.io/#dufacoga/MaterialDataTableLibrary](https://jitpack.io/#dufacoga/MaterialDataTableLibrary)
