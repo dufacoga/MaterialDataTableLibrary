@@ -31,6 +31,8 @@ fun MaterialDataTableC(
     dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
     onEdit: (rowIndex: Int) -> Unit,
     onDelete: (rowIndex: Int) -> Unit,
+    editOption: Boolean,
+    deleteOption: Boolean,
     childState: LazyListState,
     width: Dp,
     height: Dp
@@ -42,6 +44,15 @@ fun MaterialDataTableC(
     var rows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
 
     val scrollStateHorizontal = rememberScrollState()
+
+    var optionColumnWidth = 0.dp
+    if (editOption && deleteOption) {
+        optionColumnWidth = 150.dp
+    } else if (!editOption || !deleteOption) {
+        optionColumnWidth = 100.dp
+    } else {
+        optionColumnWidth = 0.dp
+    }
 
     LaunchedEffect(currentPage, pageSize) {
         isLoading = true
@@ -67,7 +78,8 @@ fun MaterialDataTableC(
                 if (isLoading) {
                     Box(
                         Modifier
-                            .fillMaxSize(),
+                            .height(height)
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
@@ -90,7 +102,7 @@ fun MaterialDataTableC(
                                 Row(
                                     modifier = Modifier.horizontalScroll(scrollStateHorizontal)
                                 ) {
-                                    val totalContentWidth = (headers.size * 150).dp + 150.dp
+                                    val totalContentWidth = (headers.size * 150).dp + optionColumnWidth
 
                                     Column(modifier = Modifier.width(totalContentWidth)) {
                                         Row(
@@ -133,18 +145,24 @@ fun MaterialDataTableC(
                                                         style = MaterialTheme.typography.bodyMedium
                                                     )
                                                 }
-                                                Row(
-                                                    modifier = Modifier
-                                                        .width(150.dp)
-                                                        .padding(4.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    IconButton(onClick = { onEdit(index) }) {
-                                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                                    }
-                                                    IconButton(onClick = { onDelete(index) }) {
-                                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                if (editOption || deleteOption) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .width(optionColumnWidth)
+                                                            .padding(4.dp),
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        if (editOption){
+                                                            IconButton(onClick = { onEdit(index) }) {
+                                                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                                            }
+                                                        }
+                                                        if (deleteOption){
+                                                            IconButton(onClick = { onDelete(index) }) {
+                                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }

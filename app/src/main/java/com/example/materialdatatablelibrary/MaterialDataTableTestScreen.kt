@@ -65,6 +65,8 @@ fun MaterialDataTableTestScreen() {
                 },
                 onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
                 onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
+                editOption = true,
+                deleteOption = true,
                 childState = childState,
                 width = width,
                 height = height
