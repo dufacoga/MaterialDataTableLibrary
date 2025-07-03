@@ -59,40 +59,21 @@ fun MaterialDataTableC(
                         CircularProgressIndicator()
                     }
                 } else {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .verticalScroll(scrollStateVertical)
-                    ) {
-                        Row(
-                            modifier = Modifier.horizontalScroll(scrollStateHorizontal)
+                    ){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
                         ) {
-                            val totalContentWidth = (headers.size * 150).dp + 150.dp
+                            Row(
+                                modifier = Modifier.horizontalScroll(scrollStateHorizontal)
+                            ) {
+                                val totalContentWidth = (headers.size * 150).dp + 150.dp
 
-                            Column(modifier = Modifier.width(totalContentWidth)) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.Start
-                                ) {
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    headers.forEach { header ->
-                                        Text(
-                                            text = header,
-                                            modifier = Modifier
-                                                .padding(4.dp)
-                                                .width(150.dp),
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(100.dp))
-                                }
-
-                                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-
-                                rows.forEachIndexed { index, row ->
+                                Column(modifier = Modifier.width(totalContentWidth)) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -101,32 +82,56 @@ fun MaterialDataTableC(
                                     ) {
                                         Spacer(modifier = Modifier.width(16.dp))
 
-                                        row.forEach { cell ->
+                                        headers.forEach { header ->
                                             Text(
-                                                text = cell,
+                                                text = header,
                                                 modifier = Modifier
                                                     .padding(4.dp)
                                                     .width(150.dp),
-                                                style = MaterialTheme.typography.bodyMedium
+                                                style = MaterialTheme.typography.labelLarge
                                             )
                                         }
-                                        Row(
-                                            modifier = Modifier
-                                                .width(150.dp)
-                                                .padding(4.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            IconButton(onClick = { onEdit(index) }) {
-                                                Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                            }
-                                            IconButton(onClick = { onDelete(index) }) {
-                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                            }
-                                        }
+                                        Spacer(modifier = Modifier.width(100.dp))
                                     }
 
                                     HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+
+                                    rows.forEachIndexed { index, row ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.Start
+                                        ) {
+                                            Spacer(modifier = Modifier.width(16.dp))
+
+                                            row.forEach { cell ->
+                                                Text(
+                                                    text = cell,
+                                                    modifier = Modifier
+                                                        .padding(4.dp)
+                                                        .width(150.dp),
+                                                    style = MaterialTheme.typography.bodyMedium
+                                                )
+                                            }
+                                            Row(
+                                                modifier = Modifier
+                                                    .width(150.dp)
+                                                    .padding(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                IconButton(onClick = { onEdit(index) }) {
+                                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                                }
+                                                IconButton(onClick = { onDelete(index) }) {
+                                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                }
+                                            }
+                                        }
+
+                                        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                    }
                                 }
                             }
                         }
