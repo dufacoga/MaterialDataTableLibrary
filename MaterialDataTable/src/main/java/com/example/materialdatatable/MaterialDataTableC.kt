@@ -5,6 +5,8 @@ import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -27,6 +31,7 @@ fun MaterialDataTableC(
     dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
     onEdit: (rowIndex: Int) -> Unit,
     onDelete: (rowIndex: Int) -> Unit,
+    childState: LazyListState,
     width: Dp,
     height: Dp
 ) {
@@ -37,7 +42,6 @@ fun MaterialDataTableC(
     var rows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
 
     val scrollStateHorizontal = rememberScrollState()
-    val scrollStateVertical = rememberScrollState()
 
     LaunchedEffect(currentPage, pageSize) {
         isLoading = true
@@ -45,58 +49,50 @@ fun MaterialDataTableC(
         isLoading = false
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(width)
+    ) {
         Card(
             modifier = Modifier
-                .width(width)
-                .height(height),
+                .fillMaxSize(),
             shape = MaterialTheme.shapes.medium,
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
                 if (isLoading) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier
+                            .fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator()
                     }
                 } else {
-                    Box(
+                    LazyColumn(
+                        state = childState,
                         modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(scrollStateVertical)
+                            .height(height)
+                            .fillMaxWidth()
+                            .nestedScroll(
+                                rememberNestedScrollInteropConnection()
+                            )
                     ){
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.horizontalScroll(scrollStateHorizontal)
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
                             ) {
-                                val totalContentWidth = (headers.size * 150).dp + 150.dp
+                                Row(
+                                    modifier = Modifier.horizontalScroll(scrollStateHorizontal)
+                                ) {
+                                    val totalContentWidth = (headers.size * 150).dp + 150.dp
 
-                                Column(modifier = Modifier.width(totalContentWidth)) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(vertical = 4.dp),
-                                        horizontalArrangement = Arrangement.Start
-                                    ) {
-                                        Spacer(modifier = Modifier.width(16.dp))
-
-                                        headers.forEach { header ->
-                                            Text(
-                                                text = header,
-                                                modifier = Modifier
-                                                    .padding(4.dp)
-                                                    .width(150.dp),
-                                                style = MaterialTheme.typography.labelLarge
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(100.dp))
-                                    }
-
-                                    HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-
-                                    rows.forEachIndexed { index, row ->
+                                    Column(modifier = Modifier.width(totalContentWidth)) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -105,32 +101,56 @@ fun MaterialDataTableC(
                                         ) {
                                             Spacer(modifier = Modifier.width(16.dp))
 
-                                            row.forEach { cell ->
+                                            headers.forEach { header ->
                                                 Text(
-                                                    text = cell,
+                                                    text = header,
                                                     modifier = Modifier
                                                         .padding(4.dp)
                                                         .width(150.dp),
-                                                    style = MaterialTheme.typography.bodyMedium
+                                                    style = MaterialTheme.typography.labelLarge
                                                 )
                                             }
-                                            Row(
-                                                modifier = Modifier
-                                                    .width(150.dp)
-                                                    .padding(4.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                IconButton(onClick = { onEdit(index) }) {
-                                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                                }
-                                                IconButton(onClick = { onDelete(index) }) {
-                                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                                }
-                                            }
+                                            Spacer(modifier = Modifier.width(100.dp))
                                         }
 
                                         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+
+                                        rows.forEachIndexed { index, row ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.Start
+                                            ) {
+                                                Spacer(modifier = Modifier.width(16.dp))
+
+                                                row.forEach { cell ->
+                                                    Text(
+                                                        text = cell,
+                                                        modifier = Modifier
+                                                            .padding(4.dp)
+                                                            .width(150.dp),
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                }
+                                                Row(
+                                                    modifier = Modifier
+                                                        .width(150.dp)
+                                                        .padding(4.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    IconButton(onClick = { onEdit(index) }) {
+                                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                                    }
+                                                    IconButton(onClick = { onDelete(index) }) {
+                                                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                    }
+                                                }
+                                            }
+
+                                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                        }
                                     }
                                 }
                             }
