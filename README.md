@@ -49,9 +49,9 @@ You can integrate the component in your app like this:
 MaterialDataTableC(
 	headers = headers,
 	dataLoader = dataLoaderFromListWithDelay(sourceProvider = { dataList }, rowMapper = { it }),
-	onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
-	onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
-	onMoreVert = { rowIndex -> println("MoreVert row at index $rowIndex") },
+	onEdit = { rowIndex, rowData -> val id = rowData[0]; println("Edit row at index $rowIndex") },
+	onDelete = { rowIndex, rowData -> val id = rowData[0]; println("Delete row at index $rowIndex") },
+	onMoreVert = { rowIndex, rowData -> val id = rowData[0]; println("MoreVert row at index $rowIndex") },
 	columnSizeAdaptive = true,
 	columnWidth = 150.dp,
 	editOption = true,
