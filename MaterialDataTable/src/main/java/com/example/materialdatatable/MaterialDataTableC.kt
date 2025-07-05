@@ -34,6 +34,7 @@ fun MaterialDataTableC(
     dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
     onEdit: (rowIndex: Int) -> Unit,
     onDelete: (rowIndex: Int) -> Unit,
+    onMoreVert: (rowIndex: Int) -> Unit,
     columnSizeAdaptive: Boolean,
     columnWidth: Dp,
     editOption: Boolean,
@@ -230,7 +231,7 @@ fun MaterialDataTableC(
                                                         }
                                                     }
                                                     if (!editOption && !deleteOption){
-                                                        IconButton(onClick = { onDelete(rowIndex) }) {
+                                                        IconButton(onClick = { onMoreVert(rowIndex) }) {
                                                             Icon(Icons.Default.MoreVert, contentDescription = "MoreVert")
                                                         }
                                                     }
