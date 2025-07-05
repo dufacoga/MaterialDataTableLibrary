@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.materialdatatable.MaterialDataTableC
+import com.example.materialdatatable.dataLoaderFromList
 import kotlinx.coroutines.delay
 
 @Composable
@@ -49,20 +50,19 @@ fun MaterialDataTableTestScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         item {
+            val dataList: List<List<String>> = (1..100).map { i ->
+                val id = i.toString()
+                listOf(
+                    id,
+                    "Douglas Cortes $id",
+                    if (id.toInt() % 2 == 0) "Admin" else "User",
+                    "user$id@example.com"
+                )
+            }
+            val loader = dataLoaderFromList(dataList) { it }
             MaterialDataTableC(
                 headers = headers,
-                dataLoader = { page, pageSize ->
-                    delay(500)
-                    (1..pageSize).map { i ->
-                        val id = ((page - 1) * pageSize + i).toString()
-                        listOf(
-                            id,
-                            "User $id",
-                            if (id.toInt() % 2 == 0) "Admin" else "User",
-                            "user$id@example.com"
-                        )
-                    }
-                },
+                dataLoader = loader,
                 onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
                 onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
                 columnSizeAdaptive = true,
@@ -74,7 +74,7 @@ fun MaterialDataTableTestScreen() {
                 childState = childState,
                 width = width,
                 height = height,
-                totalItems = 100
+                totalItems = dataList.size
             )
 
             Spacer(modifier = Modifier.height(screenHeight * 0.10f))
