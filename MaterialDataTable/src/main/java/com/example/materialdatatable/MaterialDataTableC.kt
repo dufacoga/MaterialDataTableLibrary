@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -57,7 +58,7 @@ fun MaterialDataTableC(
         when {
             editOption && deleteOption -> 140.dp
             editOption || deleteOption -> 100.dp
-            else -> 0.dp
+            else -> 100.dp
         }
     }
 
@@ -211,23 +212,26 @@ fun MaterialDataTableC(
                                                         VerticalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                                     }
                                                 }
-                                                if (editOption || deleteOption) {
-                                                    Row(
-                                                        modifier = Modifier
-                                                            .width(optionColumnWidth)
-                                                            .padding(4.dp),
-                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        if (editOption){
-                                                            IconButton(onClick = { onEdit(rowIndex) }) {
-                                                                Icon(Icons.Default.Edit, contentDescription = "Edit")
-                                                            }
+                                                Row(
+                                                    modifier = Modifier
+                                                        .width(optionColumnWidth)
+                                                        .padding(4.dp),
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    if (editOption){
+                                                        IconButton(onClick = { onEdit(rowIndex) }) {
+                                                            Icon(Icons.Default.Edit, contentDescription = "Edit")
                                                         }
-                                                        if (deleteOption){
-                                                            IconButton(onClick = { onDelete(rowIndex) }) {
-                                                                Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                                            }
+                                                    }
+                                                    if (deleteOption){
+                                                        IconButton(onClick = { onDelete(rowIndex) }) {
+                                                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                        }
+                                                    }
+                                                    if (!editOption && !deleteOption){
+                                                        IconButton(onClick = { onDelete(rowIndex) }) {
+                                                            Icon(Icons.Default.MoreVert, contentDescription = "MoreVert")
                                                         }
                                                     }
                                                 }
