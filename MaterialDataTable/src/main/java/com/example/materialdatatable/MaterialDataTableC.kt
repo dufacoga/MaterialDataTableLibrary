@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -349,12 +350,18 @@ fun DropdownMenuBox(
 }
 
 @Composable
-fun <T> dataLoaderFromList(
-    sourceList: List<T>,
+fun <T> dataLoaderFromListWithDelay(
+    sourceProvider: () -> List<T>,
     rowMapper: (T) -> List<String>
 ): suspend (Int, Int) -> List<List<String>> = { page, pageSize ->
+    while (sourceProvider().isEmpty()) {
+        delay(50)
+    }
+
+    val sourceList = sourceProvider()
     val fromIndex = (page - 1) * pageSize
     val toIndex = (fromIndex + pageSize).coerceAtMost(sourceList.size)
+
     if (fromIndex >= sourceList.size) emptyList()
     else sourceList.subList(fromIndex, toIndex).map(rowMapper)
 }

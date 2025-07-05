@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.materialdatatable.MaterialDataTableC
-import com.example.materialdatatable.dataLoaderFromList
+import com.example.materialdatatable.dataLoaderFromListWithDelay
 import kotlinx.coroutines.delay
 
 @Composable
@@ -45,7 +45,7 @@ fun MaterialDataTableTestScreen() {
         state = parentState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(0.dp,screenHeight * 0.10f,0.dp,0.dp),
+            .padding(0.dp, screenHeight * 0.10f, 0.dp, 0.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -59,7 +59,11 @@ fun MaterialDataTableTestScreen() {
                     "user$id@example.com"
                 )
             }
-            val loader = dataLoaderFromList(dataList) { it }
+            val loader = dataLoaderFromListWithDelay(
+                sourceProvider = { dataList },
+                rowMapper = { it }
+            )
+
             MaterialDataTableC(
                 headers = headers,
                 dataLoader = loader,
