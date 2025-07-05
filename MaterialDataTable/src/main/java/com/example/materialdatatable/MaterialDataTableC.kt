@@ -1,5 +1,6 @@
 package com.example.materialdatatable
 
+import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
@@ -31,33 +32,76 @@ fun MaterialDataTableC(
     dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
     onEdit: (rowIndex: Int) -> Unit,
     onDelete: (rowIndex: Int) -> Unit,
+    columnSizeAdaptive: Boolean,
+    columnWidth: Dp,
     editOption: Boolean,
     deleteOption: Boolean,
+    horizontalDividers: Boolean,
+    verticalDividers: Boolean,
     childState: LazyListState,
     width: Dp,
-    height: Dp
+    height: Dp,
+    totalItems: Int
 ) {
     var currentPage by remember { mutableStateOf(1) }
     var pageSize by remember { mutableStateOf(10) }
-    val totalItems = 100
     var isLoading by remember { mutableStateOf(true) }
     var rows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
+    var maxColumnLengths: List<Int>? by remember { mutableStateOf(null) }
+    var spacerWidth = 16.dp
 
     val scrollStateHorizontal = rememberScrollState()
 
-    var optionColumnWidth = 0.dp
-    if (editOption && deleteOption) {
-        optionColumnWidth = 150.dp
-    } else if (!editOption || !deleteOption) {
-        optionColumnWidth = 100.dp
-    } else {
-        optionColumnWidth = 0.dp
+    val optionColumnWidth = remember(editOption, deleteOption) {
+        when {
+            editOption && deleteOption -> 140.dp
+            editOption || deleteOption -> 100.dp
+            else -> 0.dp
+        }
     }
 
     LaunchedEffect(currentPage, pageSize) {
         isLoading = true
         rows = dataLoader(currentPage, pageSize) ?: emptyList()
         isLoading = false
+    }
+
+    LaunchedEffect(headers, totalItems, columnSizeAdaptive) {
+        if (columnSizeAdaptive && maxColumnLengths == null) {
+            maxColumnLengths = calculateMaxColumnLengths(
+                headers = headers,
+                dataLoader = dataLoader,
+                totalItems = totalItems,
+                pageSize = pageSize
+            )
+        } else if (!columnSizeAdaptive) {
+            maxColumnLengths = null
+        }
+    }
+
+    val characterToDpFactor = 8f
+    val internalPaddingDp = 8f // 4.dp padding on each side for Text
+    val dividerThicknessDp = 1f
+
+    val currentMaxColumnLengths = maxColumnLengths
+
+    val totalContentWidth: Float = remember(currentMaxColumnLengths, headers.size, optionColumnWidth, verticalDividers, columnSizeAdaptive, columnWidth) {
+        if (columnSizeAdaptive && currentMaxColumnLengths != null && currentMaxColumnLengths.isNotEmpty()) {
+            var calculatedWidth = 0f
+            currentMaxColumnLengths.forEachIndexed { index, length ->
+                val columnTextWidthFloat = length * characterToDpFactor
+                calculatedWidth += (columnTextWidthFloat + internalPaddingDp + spacerWidth.value)
+                if (verticalDividers && (index < headers.size - 1 || (editOption || deleteOption))) {
+                    calculatedWidth += dividerThicknessDp
+                }
+            }
+            calculatedWidth += optionColumnWidth.value
+            calculatedWidth
+        } else {
+            (headers.size * (columnWidth.value + spacerWidth.value)) +
+                    (if (verticalDividers && headers.size > 0) (headers.size - 1) * dividerThicknessDp else 0f) +
+                    optionColumnWidth.value
+        }
     }
 
     Box(
@@ -102,48 +146,69 @@ fun MaterialDataTableC(
                                 Row(
                                     modifier = Modifier.horizontalScroll(scrollStateHorizontal)
                                 ) {
-                                    val totalContentWidth = (headers.size * 150).dp + optionColumnWidth
-
-                                    Column(modifier = Modifier.width(totalContentWidth)) {
+                                    Column(
+                                        modifier = Modifier
+                                            .width(totalContentWidth.dp)
+                                    ) {
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
+                                                .height(IntrinsicSize.Min)
                                                 .padding(vertical = 4.dp),
                                             horizontalArrangement = Arrangement.Start
                                         ) {
-                                            Spacer(modifier = Modifier.width(16.dp))
-
-                                            headers.forEach { header ->
+                                            headers.forEachIndexed { index, header ->
+                                                val colWidthDp =
+                                                    if (columnSizeAdaptive && currentMaxColumnLengths != null) {
+                                                        ((currentMaxColumnLengths.getOrNull(index)?.toFloat() ?: 0f) * characterToDpFactor + internalPaddingDp).dp
+                                                    } else {
+                                                        columnWidth
+                                                    }
+                                                Spacer(modifier = Modifier.width(spacerWidth))
                                                 Text(
                                                     text = header,
                                                     modifier = Modifier
                                                         .padding(4.dp)
-                                                        .width(150.dp),
+                                                        .width(colWidthDp),
                                                     style = MaterialTheme.typography.labelLarge
                                                 )
+                                                if (verticalDividers) {
+                                                    VerticalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                                }
                                             }
-                                            Spacer(modifier = Modifier.width(100.dp))
                                         }
 
-                                        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                        if (horizontalDividers) {
+                                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                        }
 
-                                        rows.forEachIndexed { index, row ->
+                                        rows.forEachIndexed { rowIndex, row ->
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
+                                                    .height(IntrinsicSize.Min)
                                                     .padding(vertical = 4.dp),
-                                                horizontalArrangement = Arrangement.Start
+                                                horizontalArrangement = Arrangement.Start,
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Spacer(modifier = Modifier.width(16.dp))
-
-                                                row.forEach { cell ->
+                                                row.forEachIndexed { colIndex, cell ->
+                                                    val colWidthDp =
+                                                        if (columnSizeAdaptive && currentMaxColumnLengths != null) {
+                                                            ((currentMaxColumnLengths.getOrNull(colIndex)?.toFloat() ?: 0f) * characterToDpFactor + internalPaddingDp).dp
+                                                        } else {
+                                                            columnWidth
+                                                        }
+                                                    Spacer(modifier = Modifier.width(spacerWidth))
                                                     Text(
                                                         text = cell,
                                                         modifier = Modifier
                                                             .padding(4.dp)
-                                                            .width(150.dp),
+                                                            .width(colWidthDp),
                                                         style = MaterialTheme.typography.bodyMedium
                                                     )
+                                                    if (verticalDividers) {
+                                                        VerticalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                                    }
                                                 }
                                                 if (editOption || deleteOption) {
                                                     Row(
@@ -154,20 +219,21 @@ fun MaterialDataTableC(
                                                         verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         if (editOption){
-                                                            IconButton(onClick = { onEdit(index) }) {
+                                                            IconButton(onClick = { onEdit(rowIndex) }) {
                                                                 Icon(Icons.Default.Edit, contentDescription = "Edit")
                                                             }
                                                         }
                                                         if (deleteOption){
-                                                            IconButton(onClick = { onDelete(index) }) {
+                                                            IconButton(onClick = { onDelete(rowIndex) }) {
                                                                 Icon(Icons.Default.Delete, contentDescription = "Delete")
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
-
-                                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                            if (horizontalDividers) {
+                                                HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                            }
                                         }
                                     }
                                 }
@@ -175,7 +241,9 @@ fun MaterialDataTableC(
                         }
                     }
 
-                    HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    if (horizontalDividers) {
+                        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    }
 
                     Row(
                         modifier = Modifier
@@ -226,7 +294,7 @@ fun MaterialDataTableC(
                                 onClick = { currentPage = totalPages },
                                 enabled = currentPage < totalPages
                             ) {
-                                Icon(Icons.Default.ArrowForward, contentDescription = "Last Page") // You can use another icon if you want
+                                Icon(Icons.Default.ArrowForward, contentDescription = "Last Page")
                             }
                         }
                     }
@@ -278,4 +346,29 @@ fun DropdownMenuBox(
             }
         }
     }
+}
+suspend fun calculateMaxColumnLengths(
+    headers: List<String>,
+    dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
+    totalItems: Int,
+    pageSize: Int
+): List<Int> {
+    val maxLengths = MutableList(headers.size) { index -> headers[index].length }
+
+    val totalPages = (totalItems + pageSize - 1) / pageSize
+
+    for (page in 1..totalPages) {
+        val currentPageData = dataLoader(page, pageSize)
+
+        currentPageData?.forEach { row ->
+            row.forEachIndexed { colIndex, cell ->
+                if (colIndex < maxLengths.size) {
+                    if (cell.length > maxLengths[colIndex]) {
+                        maxLengths[colIndex] = cell.length
+                    }
+                }
+            }
+        }
+    }
+    return maxLengths
 }

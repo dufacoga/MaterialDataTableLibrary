@@ -65,11 +65,16 @@ fun MaterialDataTableTestScreen() {
                 },
                 onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
                 onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
+                columnSizeAdaptive = true,
+                columnWidth = 150.dp,
                 editOption = true,
                 deleteOption = true,
+                horizontalDividers = true,
+                verticalDividers = true,
                 childState = childState,
                 width = width,
-                height = height
+                height = height,
+                totalItems = 100
             )
 
             Spacer(modifier = Modifier.height(screenHeight * 0.10f))
