@@ -48,7 +48,7 @@ You can integrate the component in your app like this:
 ```kotlin
 MaterialDataTableC(
 	headers = headers,
-	dataLoader = dataLoaderFromList(dataList) { it },
+	dataLoader = dataLoaderFromListWithDelay(sourceProvider = { dataList }, rowMapper = { it }),
 	onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
 	onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
 	columnSizeAdaptive = true,
