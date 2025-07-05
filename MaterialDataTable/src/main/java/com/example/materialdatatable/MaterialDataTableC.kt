@@ -32,9 +32,9 @@ import kotlinx.coroutines.delay
 fun MaterialDataTableC(
     headers: List<String>,
     dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
-    onEdit: (rowIndex: Int) -> Unit,
-    onDelete: (rowIndex: Int) -> Unit,
-    onMoreVert: (rowIndex: Int) -> Unit,
+    onEdit: (rowIndex: Int, rowData: List<String>) -> Unit,
+    onDelete: (rowIndex: Int, rowData: List<String>) -> Unit,
+    onMoreVert: (rowIndex: Int, rowData: List<String>) -> Unit,
     columnSizeAdaptive: Boolean,
     columnWidth: Dp,
     editOption: Boolean,
@@ -221,17 +221,17 @@ fun MaterialDataTableC(
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     if (editOption){
-                                                        IconButton(onClick = { onEdit(rowIndex) }) {
+                                                        IconButton(onClick = { onEdit(rowIndex, row) }) {
                                                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                                                         }
                                                     }
                                                     if (deleteOption){
-                                                        IconButton(onClick = { onDelete(rowIndex) }) {
+                                                        IconButton(onClick = { onDelete(rowIndex, row) }) {
                                                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                                                         }
                                                     }
                                                     if (!editOption && !deleteOption){
-                                                        IconButton(onClick = { onMoreVert(rowIndex) }) {
+                                                        IconButton(onClick = { onMoreVert(rowIndex, row) }) {
                                                             Icon(Icons.Default.MoreVert, contentDescription = "MoreVert")
                                                         }
                                                     }

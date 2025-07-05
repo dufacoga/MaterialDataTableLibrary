@@ -67,9 +67,9 @@ fun MaterialDataTableTestScreen() {
             MaterialDataTableC(
                 headers = headers,
                 dataLoader = loader,
-                onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
-                onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
-                onMoreVert = { rowIndex -> println("MoreVert row at index $rowIndex") },
+                onEdit = { rowIndex, rowData -> val id = rowData[0]; println("Edit row at index $id") },
+                onDelete = { rowIndex, rowData -> val id = rowData[0]; println("Delete row at index $id") },
+                onMoreVert = { rowIndex, rowData -> val id = rowData[0]; println("MoreVert row at index $id") },
                 columnSizeAdaptive = true,
                 columnWidth = 150.dp,
                 editOption = true,
