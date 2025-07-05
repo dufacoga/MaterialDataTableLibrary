@@ -54,11 +54,16 @@ MaterialDataTableC(
     },
     onEdit = { rowIndex -> /* your edit logic */ },
     onDelete = { rowIndex -> /* your delete logic */ },
+    columnSizeAdaptive = true,
+    columnWidth = 150.dp,
     editOption = true,
     deleteOption = true,
+    horizontalDividers = true,
+    verticalDividers = true,
     childState = rememberLazyListState(),
     width = 400.dp,
-    height = 600.dp
+    height = 600.dp,
+    totalItems = 100
 )
 ```
 
