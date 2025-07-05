@@ -47,23 +47,20 @@ You can integrate the component in your app like this:
 
 ```kotlin
 MaterialDataTableC(
-    headers = listOf("ID", "Name", "Role", "Email"),
-    dataLoader = { page, pageSize -> 
-        // Return your data here as (List<List<String>>)
-        myApi.fetchUsers(page, pageSize)
-    },
-    onEdit = { rowIndex -> /* your edit logic */ },
-    onDelete = { rowIndex -> /* your delete logic */ },
-    columnSizeAdaptive = true,
-    columnWidth = 150.dp,
-    editOption = true,
-    deleteOption = true,
-    horizontalDividers = true,
-    verticalDividers = true,
-    childState = rememberLazyListState(),
-    width = 400.dp,
-    height = 600.dp,
-    totalItems = 100
+	headers = headers,
+	dataLoader = dataLoaderFromList(dataList) { it },
+	onEdit = { rowIndex -> println("Edit row at index $rowIndex") },
+	onDelete = { rowIndex -> println("Delete row at index $rowIndex") },
+	columnSizeAdaptive = true,
+	columnWidth = 150.dp,
+	editOption = true,
+	deleteOption = true,
+	horizontalDividers = true,
+	verticalDividers = true,
+	childState = childState,
+	width = width,
+	height = height,
+	totalItems = dataList.size
 )
 ```
 
