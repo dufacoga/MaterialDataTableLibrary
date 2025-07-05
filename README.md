@@ -49,11 +49,14 @@ You can integrate the component in your app like this:
 MaterialDataTableC(
     headers = listOf("ID", "Name", "Role", "Email"),
     dataLoader = { page, pageSize -> 
-        // Return your data here as List<List<String>>
+        // Return your data here as (List<List<String>>)
         myApi.fetchUsers(page, pageSize)
     },
     onEdit = { rowIndex -> /* your edit logic */ },
     onDelete = { rowIndex -> /* your delete logic */ },
+    editOption = true,
+    deleteOption = true,
+    childState = rememberLazyListState(),
     width = 400.dp,
     height = 600.dp
 )
