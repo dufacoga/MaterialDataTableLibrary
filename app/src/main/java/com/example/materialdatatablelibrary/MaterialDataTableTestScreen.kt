@@ -2,17 +2,13 @@ package com.example.materialdatatablelibrary
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
-import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -20,7 +16,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.materialdatatable.MaterialDataTableC
 import com.example.materialdatatable.dataLoaderFromListWithDelay
-import kotlinx.coroutines.delay
 
 @Composable
 fun MaterialDataTableTestScreen() {
@@ -67,9 +62,9 @@ fun MaterialDataTableTestScreen() {
             MaterialDataTableC(
                 headers = headers,
                 dataLoader = loader,
-                onEdit = { rowIndex, rowData -> val id = rowData[0]; println("Edit row at index $id") },
-                onDelete = { rowIndex, rowData -> val id = rowData[0]; println("Delete row at index $id") },
-                onMoreVert = { rowIndex, rowData -> val id = rowData[0]; println("MoreVert row at index $id") },
+                onEdit = { _, rowData -> val id = rowData[0]; println("Edit row at index $id") },
+                onDelete = { _, rowData -> val id = rowData[0]; println("Delete row at index $id") },
+                onMoreVert = { _, rowData -> val id = rowData[0]; println("MoreVert row at index $id") },
                 columnSizeAdaptive = true,
                 columnWidth = 150.dp,
                 editOption = true,

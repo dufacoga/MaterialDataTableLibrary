@@ -1,0 +1,11 @@
+<resources>
+    <string name="label_rows">Filas:</string>
+    <string name="label_of">de</string>
+    <string name="label_first_page">Primera página</string>
+    <string name="label_previous_page">Página anterior</string>
+    <string name="label_next_page">Página siguiente</string>
+    <string name="label_last_page">Última página</string>
+    <string name="label_edit">Editar</string>
+    <string name="label_delete">Eliminar</string>
+    <string name="label_more_options">Más opciones</string>
+</resources>

@@ -1,28 +1,20 @@
 package com.example.materialdatatable
 
-import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -46,12 +38,12 @@ fun MaterialDataTableC(
     height: Dp,
     totalItems: Int
 ) {
-    var currentPage by remember { mutableStateOf(1) }
-    var pageSize by remember { mutableStateOf(10) }
+    var currentPage by remember { mutableIntStateOf(1) }
+    var pageSize by remember { mutableIntStateOf(10) }
     var isLoading by remember { mutableStateOf(true) }
     var rows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
     var maxColumnLengths: List<Int>? by remember { mutableStateOf(null) }
-    var spacerWidth = 16.dp
+    val spacerWidth = 16.dp
 
     val scrollStateHorizontal = rememberScrollState()
 
@@ -83,13 +75,13 @@ fun MaterialDataTableC(
     }
 
     val characterToDpFactor = 8f
-    val internalPaddingDp = 8f // 4.dp padding on each side for Text
+    val internalPaddingDp = 8f
     val dividerThicknessDp = 1f
 
     val currentMaxColumnLengths = maxColumnLengths
 
     val totalContentWidth: Float = remember(currentMaxColumnLengths, headers.size, optionColumnWidth, verticalDividers, columnSizeAdaptive, columnWidth) {
-        if (columnSizeAdaptive && currentMaxColumnLengths != null && currentMaxColumnLengths.isNotEmpty()) {
+        if (columnSizeAdaptive && !currentMaxColumnLengths.isNullOrEmpty()) {
             var calculatedWidth = 0f
             currentMaxColumnLengths.forEachIndexed { index, length ->
                 val columnTextWidthFloat = length * characterToDpFactor
@@ -102,7 +94,7 @@ fun MaterialDataTableC(
             calculatedWidth
         } else {
             (headers.size * (columnWidth.value + spacerWidth.value)) +
-                    (if (verticalDividers && headers.size > 0) (headers.size - 1) * dividerThicknessDp else 0f) +
+                    (if (verticalDividers && headers.isNotEmpty()) (headers.size - 1) * dividerThicknessDp else 0f) +
                     optionColumnWidth.value
         }
     }
@@ -222,17 +214,17 @@ fun MaterialDataTableC(
                                                 ) {
                                                     if (editOption){
                                                         IconButton(onClick = { onEdit(rowIndex, row) }) {
-                                                            Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.label_edit))
                                                         }
                                                     }
                                                     if (deleteOption){
                                                         IconButton(onClick = { onDelete(rowIndex, row) }) {
-                                                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.label_delete))
                                                         }
                                                     }
                                                     if (!editOption && !deleteOption){
                                                         IconButton(onClick = { onMoreVert(rowIndex, row) }) {
-                                                            Icon(Icons.Default.MoreVert, contentDescription = "MoreVert")
+                                                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.label_more_options))
                                                         }
                                                     }
                                                 }
@@ -259,7 +251,7 @@ fun MaterialDataTableC(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Rows:", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.label_rows), style = MaterialTheme.typography.bodyMedium)
                             DropdownMenuBox(
                                 options = listOf(5, 10, 25, 50),
                                 selected = pageSize,
@@ -272,35 +264,36 @@ fun MaterialDataTableC(
                             val firstItem = (currentPage - 1) * pageSize + 1
                             val lastItem = minOf(currentPage * pageSize, totalItems)
                             val totalPages = (totalItems + pageSize - 1) / pageSize
+                            val stringOf = stringResource(R.string.label_of)
 
-                            Text("$firstItem–$lastItem of $totalItems", style = MaterialTheme.typography.bodyMedium)
+                            Text("$firstItem–$lastItem $stringOf $totalItems", style = MaterialTheme.typography.bodyMedium)
 
                             IconButton(
                                 onClick = { currentPage = 1 },
                                 enabled = currentPage > 1
                             ) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "First Page")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
                             }
 
                             IconButton(
                                 onClick = { if (currentPage > 1) currentPage-- },
                                 enabled = currentPage > 1
                             ) {
-                                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Previous Page")
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
                             }
 
                             IconButton(
                                 onClick = { if (currentPage < totalPages) currentPage++ },
                                 enabled = currentPage < totalPages
                             ) {
-                                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next Page")
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
                             }
 
                             IconButton(
                                 onClick = { currentPage = totalPages },
                                 enabled = currentPage < totalPages
                             ) {
-                                Icon(Icons.Default.ArrowForward, contentDescription = "Last Page")
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
                             }
                         }
                     }

@@ -1,0 +1,11 @@
+<resources>
+    <string name="label_rows">Rows:</string>
+    <string name="label_of">of</string>
+    <string name="label_first_page">First Page</string>
+    <string name="label_previous_page">Previous Page</string>
+    <string name="label_next_page">Next Page</string>
+    <string name="label_last_page">Last Page</string>
+    <string name="label_edit">Edit</string>
+    <string name="label_delete">Delete</string>
+    <string name="label_more_options">More Options</string>
+</resources>
