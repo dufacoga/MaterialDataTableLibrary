@@ -71,6 +71,7 @@ fun MaterialDataTableTestScreen() {
                 deleteOption = true,
                 horizontalDividers = true,
                 verticalDividers = true,
+                paginationRowFixed = false,
                 childState = childState,
                 width = width,
                 height = height,

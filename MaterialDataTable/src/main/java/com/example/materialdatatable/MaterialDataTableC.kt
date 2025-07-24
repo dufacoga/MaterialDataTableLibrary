@@ -33,6 +33,7 @@ fun MaterialDataTableC(
     deleteOption: Boolean,
     horizontalDividers: Boolean,
     verticalDividers: Boolean,
+    paginationRowFixed: Boolean,
     childState: LazyListState,
     width: Dp,
     height: Dp,
@@ -237,63 +238,128 @@ fun MaterialDataTableC(
                                 }
                             }
                         }
+
+                        if (!paginationRowFixed) {
+                            item {
+                                if (horizontalDividers) {
+                                    HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp,5.dp,10.dp,5.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(stringResource(R.string.label_rows), style = MaterialTheme.typography.bodyMedium)
+                                        DropdownMenuBox(
+                                            options = listOf(5, 10, 25, 50),
+                                            selected = pageSize,
+                                            onSelectedChange = { pageSize = it },
+                                            width = 50.dp
+                                        )
+                                    }
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        val firstItem = (currentPage - 1) * pageSize + 1
+                                        val lastItem = minOf(currentPage * pageSize, totalItems)
+                                        val totalPages = (totalItems + pageSize - 1) / pageSize
+                                        val stringOf = stringResource(R.string.label_of)
+
+                                        Text("$firstItem–$lastItem $stringOf $totalItems", style = MaterialTheme.typography.bodyMedium)
+
+                                        IconButton(
+                                            onClick = { currentPage = 1 },
+                                            enabled = currentPage > 1
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
+                                        }
+
+                                        IconButton(
+                                            onClick = { if (currentPage > 1) currentPage-- },
+                                            enabled = currentPage > 1
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
+                                        }
+
+                                        IconButton(
+                                            onClick = { if (currentPage < totalPages) currentPage++ },
+                                            enabled = currentPage < totalPages
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
+                                        }
+
+                                        IconButton(
+                                            onClick = { currentPage = totalPages },
+                                            enabled = currentPage < totalPages
+                                        ) {
+                                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    if (horizontalDividers) {
-                        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp,5.dp,10.dp,5.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.label_rows), style = MaterialTheme.typography.bodyMedium)
-                            DropdownMenuBox(
-                                options = listOf(5, 10, 25, 50),
-                                selected = pageSize,
-                                onSelectedChange = { pageSize = it },
-                                width = 50.dp
-                            )
+                    if (paginationRowFixed) {
+                        if (horizontalDividers) {
+                            HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                         }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            val firstItem = (currentPage - 1) * pageSize + 1
-                            val lastItem = minOf(currentPage * pageSize, totalItems)
-                            val totalPages = (totalItems + pageSize - 1) / pageSize
-                            val stringOf = stringResource(R.string.label_of)
-
-                            Text("$firstItem–$lastItem $stringOf $totalItems", style = MaterialTheme.typography.bodyMedium)
-
-                            IconButton(
-                                onClick = { currentPage = 1 },
-                                enabled = currentPage > 1
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp,5.dp,10.dp,5.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(stringResource(R.string.label_rows), style = MaterialTheme.typography.bodyMedium)
+                                DropdownMenuBox(
+                                    options = listOf(5, 10, 25, 50),
+                                    selected = pageSize,
+                                    onSelectedChange = { pageSize = it },
+                                    width = 50.dp
+                                )
                             }
 
-                            IconButton(
-                                onClick = { if (currentPage > 1) currentPage-- },
-                                enabled = currentPage > 1
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
-                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                val firstItem = (currentPage - 1) * pageSize + 1
+                                val lastItem = minOf(currentPage * pageSize, totalItems)
+                                val totalPages = (totalItems + pageSize - 1) / pageSize
+                                val stringOf = stringResource(R.string.label_of)
 
-                            IconButton(
-                                onClick = { if (currentPage < totalPages) currentPage++ },
-                                enabled = currentPage < totalPages
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
-                            }
+                                Text("$firstItem–$lastItem $stringOf $totalItems", style = MaterialTheme.typography.bodyMedium)
 
-                            IconButton(
-                                onClick = { currentPage = totalPages },
-                                enabled = currentPage < totalPages
-                            ) {
-                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
+                                IconButton(
+                                    onClick = { currentPage = 1 },
+                                    enabled = currentPage > 1
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
+                                }
+
+                                IconButton(
+                                    onClick = { if (currentPage > 1) currentPage-- },
+                                    enabled = currentPage > 1
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
+                                }
+
+                                IconButton(
+                                    onClick = { if (currentPage < totalPages) currentPage++ },
+                                    enabled = currentPage < totalPages
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
+                                }
+
+                                IconButton(
+                                    onClick = { currentPage = totalPages },
+                                    enabled = currentPage < totalPages
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
+                                }
                             }
                         }
                     }
