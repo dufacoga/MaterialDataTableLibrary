@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.materialdatatable.MaterialDataTableC
-import com.example.materialdatatable.dataLoaderFromListWithDelay
+import com.example.materialdatatable.dataLoaderFromList
 
 @Composable
 fun MaterialDataTableTestScreen() {
@@ -36,6 +36,20 @@ fun MaterialDataTableTestScreen() {
         screenHeight * 0.80f
     }
 
+    val dataList: List<List<String>> = (1..100).map { i ->
+        val id = i.toString()
+        listOf(
+            id,
+            "Douglas Cortes $id",
+            if (id.toInt() % 2 == 0) "Admin" else "User",
+            "user$id@example.com"
+        )
+    }
+
+    val loader = dataLoaderFromList(
+        sourceProvider = { dataList }
+    )
+
     LazyColumn(
         state = parentState,
         modifier = Modifier
@@ -45,33 +59,21 @@ fun MaterialDataTableTestScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         item {
-            val dataList: List<List<String>> = (1..100).map { i ->
-                val id = i.toString()
-                listOf(
-                    id,
-                    "Douglas Cortes $id",
-                    if (id.toInt() % 2 == 0) "Admin" else "User",
-                    "user$id@example.com"
-                )
-            }
-            val loader = dataLoaderFromListWithDelay(
-                sourceProvider = { dataList },
-                rowMapper = { it }
-            )
-
             MaterialDataTableC(
                 headers = headers,
                 dataLoader = loader,
-                onEdit = { _, rowData -> val id = rowData[0]; println("Edit row at index $id") },
-                onDelete = { _, rowData -> val id = rowData[0]; println("Delete row at index $id") },
-                onMoreVert = { _, rowData -> val id = rowData[0]; println("MoreVert row at index $id") },
+                rowMapper = { it },
+                onEdit = { item -> val id = item[0]; println("Edit row at index $id") },
+                onDelete = { item -> val id = item[0]; println("Delete row at index $id") },
+                onMore = { item -> val id = item[0]; println("More row at index $id") },
                 columnSizeAdaptive = true,
                 columnWidth = 150.dp,
+                moreOption = false,
                 editOption = true,
                 deleteOption = true,
                 horizontalDividers = true,
                 verticalDividers = true,
-                paginationRowFixed = false,
+                paginationRowFixed = true,
                 childState = childState,
                 width = width,
                 height = height,

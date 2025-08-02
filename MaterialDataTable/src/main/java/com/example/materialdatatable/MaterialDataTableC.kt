@@ -1,5 +1,7 @@
 package com.example.materialdatatable
 
+import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
@@ -7,28 +9,29 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import androidx.compose.ui.res.painterResource
 
 
 @Composable
-fun MaterialDataTableC(
+fun <T> MaterialDataTableC(
     headers: List<String>,
-    dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
-    onEdit: (rowIndex: Int, rowData: List<String>) -> Unit,
-    onDelete: (rowIndex: Int, rowData: List<String>) -> Unit,
-    onMoreVert: (rowIndex: Int, rowData: List<String>) -> Unit,
+    dataLoader: suspend (page: Int, pageSize: Int) -> List<T>?,
+    rowMapper: (T) -> List<String>,
+    onEdit: (item: T) -> Unit,
+    onDelete: (item: T) -> Unit,
+    onMore: (item: T) -> Unit,
     columnSizeAdaptive: Boolean,
     columnWidth: Dp,
+    moreOption: Boolean,
     editOption: Boolean,
     deleteOption: Boolean,
     horizontalDividers: Boolean,
@@ -42,23 +45,92 @@ fun MaterialDataTableC(
     var currentPage by remember { mutableIntStateOf(1) }
     var pageSize by remember { mutableIntStateOf(10) }
     var isLoading by remember { mutableStateOf(true) }
-    var rows by remember { mutableStateOf<List<List<String>>>(emptyList()) }
+    var rows by remember { mutableStateOf<List<T>>(emptyList()) }
     var maxColumnLengths: List<Int>? by remember { mutableStateOf(null) }
     val spacerWidth = 16.dp
 
+    var sortColumn by remember { mutableStateOf<Int?>(null) }
+    var sortMode by remember { mutableStateOf(SortMode.Asc) }
+    var allItemsCache by remember { mutableStateOf<List<T>>(emptyList()) }
+    var allItemsLoaded by remember { mutableStateOf(false) }
+
     val scrollStateHorizontal = rememberScrollState()
 
-    val optionColumnWidth = remember(editOption, deleteOption) {
-        when {
-            editOption && deleteOption -> 140.dp
-            editOption || deleteOption -> 100.dp
-            else -> 100.dp
+    val optionColumnWidth = remember(editOption, deleteOption, moreOption) {
+        val optionsCount = listOf(editOption, deleteOption, moreOption).count { it }
+        when (optionsCount) {
+            1 -> 88.dp
+            2 -> 136.dp
+            3 -> 184.dp
+            else -> 32.dp
         }
     }
 
-    LaunchedEffect(currentPage, pageSize) {
+    val hasOptionColumn = editOption || deleteOption || moreOption
+
+    suspend fun loadAllItems(): List<T> {
+        if (allItemsLoaded && allItemsCache.isNotEmpty()) return allItemsCache
+        val pages = (totalItems + pageSize - 1) / pageSize
+        val acc = mutableListOf<T>()
+        for (p in 1..pages) {
+            val chunk = dataLoader(p, pageSize) ?: emptyList()
+            acc += chunk
+        }
+        allItemsCache = acc
+        allItemsLoaded = true
+        return acc
+    }
+
+    fun naturalCompare(a: String, b: String): Int {
+        val re = Regex("\\d+|\\D+")
+        val ta = re.findAll(a).map { it.value }.toList()
+        val tb = re.findAll(b).map { it.value }.toList()
+        val n = minOf(ta.size, tb.size)
+
+        for (i in 0 until n) {
+            val sa = ta[i]
+            val sb = tb[i]
+            val numA = sa.first().isDigit()
+            val numB = sb.first().isDigit()
+
+            val cmp = if (numA && numB) {
+                val za = sa.trimStart('0')
+                val zb = sb.trimStart('0')
+                when {
+                    za.length != zb.length -> za.length.compareTo(zb.length)
+                    else -> {
+                        val r = za.compareTo(zb)
+                        if (r != 0) r else sa.length.compareTo(sb.length)
+                    }
+                }
+            } else {
+                sa.compareTo(sb, ignoreCase = true)
+            }
+            if (cmp != 0) return cmp
+        }
+        return ta.size.compareTo(tb.size)
+    }
+
+    LaunchedEffect(currentPage, pageSize, sortColumn, sortMode) {
+
         isLoading = true
-        rows = dataLoader(currentPage, pageSize) ?: emptyList()
+        val doSort = sortColumn != null && sortMode != SortMode.Neutral
+
+        if (!doSort) {
+            rows = dataLoader(currentPage, pageSize) ?: emptyList()
+        } else {
+            val all = loadAllItems()
+            val idx = sortColumn!!
+            val sorted = all.sortedWith { t1, t2 ->
+                val c1 = rowMapper(t1).getOrNull(idx) ?: ""
+                val c2 = rowMapper(t2).getOrNull(idx) ?: ""
+                val base = naturalCompare(c1, c2)
+                if (sortMode == SortMode.Asc) base else -base
+            }
+            val from = ((currentPage - 1) * pageSize).coerceAtLeast(0)
+            val to = (from + pageSize).coerceAtMost(sorted.size)
+            rows = if (from < to) sorted.subList(from, to) else emptyList()
+        }
         isLoading = false
     }
 
@@ -67,6 +139,7 @@ fun MaterialDataTableC(
             maxColumnLengths = calculateMaxColumnLengths(
                 headers = headers,
                 dataLoader = dataLoader,
+                rowMapper = rowMapper,
                 totalItems = totalItems,
                 pageSize = pageSize
             )
@@ -78,6 +151,7 @@ fun MaterialDataTableC(
     val characterToDpFactor = 8f
     val internalPaddingDp = 8f
     val dividerThicknessDp = 1f
+    val sortButtonDp = 34f
 
     val currentMaxColumnLengths = maxColumnLengths
 
@@ -85,18 +159,29 @@ fun MaterialDataTableC(
         if (columnSizeAdaptive && !currentMaxColumnLengths.isNullOrEmpty()) {
             var calculatedWidth = 0f
             currentMaxColumnLengths.forEachIndexed { index, length ->
-                val columnTextWidthFloat = length * characterToDpFactor
-                calculatedWidth += (columnTextWidthFloat + internalPaddingDp + spacerWidth.value)
-                if (verticalDividers && (index < headers.size - 1 || (editOption || deleteOption))) {
+                val baseWidth = (length * characterToDpFactor) + internalPaddingDp
+                val minForSort = (headers[index].length * characterToDpFactor) + sortButtonDp
+                val effective = maxOf(baseWidth, minForSort)
+                calculatedWidth += (effective + spacerWidth.value)
+                if (verticalDividers && (index < headers.size - 1 || (editOption || deleteOption || moreOption))) {
                     calculatedWidth += dividerThicknessDp
                 }
             }
             calculatedWidth += optionColumnWidth.value
             calculatedWidth
         } else {
-            (headers.size * (columnWidth.value + spacerWidth.value)) +
-                    (if (verticalDividers && headers.isNotEmpty()) (headers.size - 1) * dividerThicknessDp else 0f) +
-                    optionColumnWidth.value
+            var calculatedWidth = 0f
+            headers.forEachIndexed { index, _ ->
+                val minForSort = (headers[index].length * characterToDpFactor) + sortButtonDp
+                val effective = maxOf(columnWidth.value, minForSort)
+
+                calculatedWidth += (effective + spacerWidth.value)
+                if (verticalDividers && (index < headers.size - 1 || (editOption || deleteOption || moreOption))) {
+                    calculatedWidth += dividerThicknessDp
+                }
+            }
+            calculatedWidth += optionColumnWidth.value
+            calculatedWidth
         }
     }
 
@@ -161,14 +246,67 @@ fun MaterialDataTableC(
                                                         columnWidth
                                                     }
                                                 Spacer(modifier = Modifier.width(spacerWidth))
-                                                Text(
-                                                    text = header,
+                                                Row(
                                                     modifier = Modifier
                                                         .padding(4.dp)
                                                         .width(colWidthDp),
-                                                    style = MaterialTheme.typography.labelLarge
-                                                )
-                                                if (verticalDividers) {
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = header,
+                                                        style = MaterialTheme.typography.labelLarge,
+                                                        modifier = Modifier.weight(1f, fill = false)
+                                                    )
+
+                                                    val isActive = sortColumn == index
+
+                                                    val nextMode = if (isActive) {
+                                                        when (sortMode) {
+                                                            SortMode.Asc     -> SortMode.Desc
+                                                            SortMode.Desc    -> SortMode.Neutral
+                                                            SortMode.Neutral -> SortMode.Asc
+                                                        }
+                                                    } else {
+                                                        SortMode.Asc
+                                                    }
+
+                                                    val painter = when (nextMode) {
+                                                        SortMode.Asc     -> painterResource(R.drawable.ic_remix_sort_asc)
+                                                        SortMode.Desc    -> painterResource(R.drawable.ic_remix_sort_desc)
+                                                        SortMode.Neutral -> painterResource(R.drawable.ic_remix_sort_ntrl)
+                                                    }
+
+                                                    IconButton(
+                                                        onClick = {
+                                                            if (sortColumn == index) {
+                                                                sortMode = when (sortMode) {
+                                                                    SortMode.Asc     -> SortMode.Desc
+                                                                    SortMode.Desc    -> {
+                                                                        sortColumn = null
+                                                                        SortMode.Neutral
+                                                                    }
+                                                                    SortMode.Neutral -> SortMode.Asc
+                                                                }
+                                                            } else {
+                                                                sortColumn = index
+                                                                sortMode = SortMode.Asc
+                                                            }
+                                                            currentPage = 1
+                                                        }, modifier = Modifier.size(26.dp).padding(start = 8.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painter,
+                                                            contentDescription = when {
+                                                                sortColumn == null -> "Orden descendente"
+                                                                isActive && sortMode == SortMode.Desc -> "Orden descendente"
+                                                                isActive && sortMode == SortMode.Asc  -> "Orden ascendente"
+                                                                isActive && sortMode == SortMode.Neutral -> "Orden neutral"
+                                                                else -> "Orden descendente"
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                                if (verticalDividers && (index < headers.size - 1 || hasOptionColumn)) {
                                                     VerticalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                                 }
                                             }
@@ -178,7 +316,8 @@ fun MaterialDataTableC(
                                             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                         }
 
-                                        rows.forEachIndexed { rowIndex, row ->
+                                        rows.forEach { item ->
+                                            val rowData = rowMapper(item)
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -187,7 +326,7 @@ fun MaterialDataTableC(
                                                 horizontalArrangement = Arrangement.Start,
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                row.forEachIndexed { colIndex, cell ->
+                                                rowData.forEachIndexed { colIndex, cell ->
                                                     val colWidthDp =
                                                         if (columnSizeAdaptive && currentMaxColumnLengths != null) {
                                                             ((currentMaxColumnLengths.getOrNull(colIndex)?.toFloat() ?: 0f) * characterToDpFactor + internalPaddingDp).dp
@@ -198,34 +337,42 @@ fun MaterialDataTableC(
                                                     Text(
                                                         text = cell,
                                                         modifier = Modifier
-                                                            .padding(4.dp)
+                                                            .padding(4.dp,14.dp)
                                                             .width(colWidthDp),
                                                         style = MaterialTheme.typography.bodyMedium
                                                     )
-                                                    if (verticalDividers) {
+                                                    if (verticalDividers && (colIndex < headers.size - 1 || hasOptionColumn)) {
                                                         VerticalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                                     }
                                                 }
                                                 Row(
                                                     modifier = Modifier
                                                         .width(optionColumnWidth)
-                                                        .padding(4.dp),
-                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        .padding(4.dp,0.dp),
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
+                                                    if (moreOption){
+                                                        IconButton(onClick = { onMore(item) }) {
+                                                            Icon(
+                                                                painter = painterResource(id = R.drawable.ic_remix_more),
+                                                                contentDescription = stringResource(R.string.label_more_options)
+                                                            )
+                                                        }
+                                                    }
                                                     if (editOption){
-                                                        IconButton(onClick = { onEdit(rowIndex, row) }) {
-                                                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.label_edit))
+                                                        IconButton(onClick = { onEdit(item) }) {
+                                                            Icon(
+                                                                painter = painterResource(id = R.drawable.ic_remix_edit),
+                                                                contentDescription = stringResource(R.string.label_edit)
+                                                            )
                                                         }
                                                     }
                                                     if (deleteOption){
-                                                        IconButton(onClick = { onDelete(rowIndex, row) }) {
-                                                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.label_delete))
-                                                        }
-                                                    }
-                                                    if (!editOption && !deleteOption){
-                                                        IconButton(onClick = { onMoreVert(rowIndex, row) }) {
-                                                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.label_more_options))
+                                                        IconButton(onClick = { onDelete(item) }) {
+                                                            Icon(
+                                                                painter = painterResource(id = R.drawable.ic_remix_delete),
+                                                                contentDescription = stringResource(R.string.label_delete)
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -274,28 +421,40 @@ fun MaterialDataTableC(
                                             onClick = { currentPage = 1 },
                                             enabled = currentPage > 1
                                         ) {
-                                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_remix_skip_left),
+                                                contentDescription = stringResource(R.string.label_first_page)
+                                            )
                                         }
 
                                         IconButton(
                                             onClick = { if (currentPage > 1) currentPage-- },
                                             enabled = currentPage > 1
                                         ) {
-                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_remix_arrow_left),
+                                                contentDescription = stringResource(R.string.label_previous_page)
+                                            )
                                         }
 
                                         IconButton(
                                             onClick = { if (currentPage < totalPages) currentPage++ },
                                             enabled = currentPage < totalPages
                                         ) {
-                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_remix_arrow_right),
+                                                contentDescription = stringResource(R.string.label_next_page)
+                                            )
                                         }
 
                                         IconButton(
                                             onClick = { currentPage = totalPages },
                                             enabled = currentPage < totalPages
                                         ) {
-                                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_remix_skip_right),
+                                                contentDescription = stringResource(R.string.label_last_page)
+                                            )
                                         }
                                     }
                                 }
@@ -337,28 +496,40 @@ fun MaterialDataTableC(
                                     onClick = { currentPage = 1 },
                                     enabled = currentPage > 1
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.label_first_page))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_remix_skip_left),
+                                        contentDescription = stringResource(R.string.label_first_page)
+                                    )
                                 }
 
                                 IconButton(
                                     onClick = { if (currentPage > 1) currentPage-- },
                                     enabled = currentPage > 1
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.label_previous_page))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_remix_arrow_left),
+                                        contentDescription = stringResource(R.string.label_previous_page)
+                                    )
                                 }
 
                                 IconButton(
                                     onClick = { if (currentPage < totalPages) currentPage++ },
                                     enabled = currentPage < totalPages
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.label_next_page))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_remix_arrow_right),
+                                        contentDescription = stringResource(R.string.label_next_page)
+                                    )
                                 }
 
                                 IconButton(
                                     onClick = { currentPage = totalPages },
                                     enabled = currentPage < totalPages
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.label_last_page))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_remix_skip_right),
+                                        contentDescription = stringResource(R.string.label_last_page)
+                                    )
                                 }
                             }
                         }
@@ -368,6 +539,8 @@ fun MaterialDataTableC(
         }
     }
 }
+
+enum class SortMode { Desc, Asc, Neutral }
 
 @Composable
 fun DropdownMenuBox(
@@ -414,36 +587,38 @@ fun DropdownMenuBox(
 }
 
 @Composable
-fun <T> dataLoaderFromListWithDelay(
+fun <T> dataLoaderFromList(
     sourceProvider: () -> List<T>,
-    rowMapper: (T) -> List<String>
-): suspend (Int, Int) -> List<List<String>> = { page, pageSize ->
-    while (sourceProvider().isEmpty()) {
-        delay(50)
-    }
-
+): suspend (Int, Int) -> List<T> = { page, pageSize ->
     val sourceList = sourceProvider()
     val fromIndex = (page - 1) * pageSize
     val toIndex = (fromIndex + pageSize).coerceAtMost(sourceList.size)
 
     if (fromIndex >= sourceList.size) emptyList()
-    else sourceList.subList(fromIndex, toIndex).map(rowMapper)
+    else sourceList.subList(fromIndex, toIndex)
 }
 
-suspend fun calculateMaxColumnLengths(
+suspend fun <T> calculateMaxColumnLengths(
     headers: List<String>,
-    dataLoader: suspend (page: Int, pageSize: Int) -> List<List<String>>?,
+    dataLoader: suspend (page: Int, pageSize: Int) -> List<T>?,
+    rowMapper: (T) -> List<String>,
     totalItems: Int,
-    pageSize: Int
+    pageSize: Int,
+    sortButtonDp: Float = 34f,
+    characterToDpFactor: Float = 8f
 ): List<Int> {
-    val maxLengths = MutableList(headers.size) { index -> headers[index].length }
+    val extraCharsForSort = kotlin.math.ceil(sortButtonDp / characterToDpFactor).toInt()
+
+    val maxLengths = MutableList(headers.size) { index ->
+        headers[index].length + extraCharsForSort
+    }
 
     val totalPages = (totalItems + pageSize - 1) / pageSize
 
     for (page in 1..totalPages) {
-        val currentPageData = dataLoader(page, pageSize)
-
-        currentPageData?.forEach { row ->
+        val currentPageItems = dataLoader(page, pageSize)
+        currentPageItems?.forEach { item ->
+            val row = rowMapper(item)
             row.forEachIndexed { colIndex, cell ->
                 if (colIndex < maxLengths.size) {
                     if (cell.length > maxLengths[colIndex]) {
